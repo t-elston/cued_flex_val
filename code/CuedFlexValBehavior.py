@@ -11,20 +11,11 @@ import numpy as np
 import pdb
 import h5py
 import matplotlib.pyplot as plt
-import matplotlib.cm as cm
 import statsmodels.formula.api as smf
 import statsmodels.api as sm
-from mpl_toolkits.axes_grid1.inset_locator import inset_axes
-import seaborn as sns
-from scipy import stats
 import scipy.signal as sig
 
 import utils as ut
-
-
-# this command opens the debugger
-                  # leave this commented for first runs, then uncomment for
-                  # interactive debugging
 
 
 def getMLH5(datadir,run_debug):
@@ -34,8 +25,7 @@ def getMLH5(datadir,run_debug):
         pdb.set_trace() 
     
     # set the path so python is pointed at the data folder
-    os.chdir(datadir)
-  
+    os.chdir(datadir) 
     
     fnames = os.listdir(datadir)
     
@@ -166,11 +156,12 @@ def getMLH5(datadir,run_debug):
                     13: 'n_saccs', 14: 'sacc1', 15: 'sacc2', 16: 'sacc3',
                     17: 'sacc4', 18: 'sacc5', 19: 'sacc1_val'}, axis= 1,inplace=True)
     
-    trials2drop = alldata.use !=1 # drop unusable trials
+    alldata = alldata.reset_index(drop=True)
+    trials2drop = alldata.use == 0 # drop unusable trials
     alldata = alldata.drop(alldata[trials2drop].index)
     alldata = alldata.drop(labels='use',axis='columns')
-
-        
+    alldata = alldata.reset_index(drop=True)    
+    
     xx=[]
     return alldata
 # END of getMLH5
@@ -348,6 +339,7 @@ def choice_or_rt_by_val(alldata,debug_):
         val_rule1_ix = val_trial_data.rule ==1
 
         chosen_ix = val_trial_data.chosenval == vals[v]
+        picked4   = val_trial_data.chosenval == 4
         forced_ix = val_trial_data.forced ==1
 
         choice_means[v,0] = chosen_ix[val_rule1_ix].mean()
@@ -360,15 +352,15 @@ def choice_or_rt_by_val(alldata,debug_):
         rt_sems[v,0]      = val_trial_data.rt[val_rule1_ix].sem()
         rt_sems[v,1]      = val_trial_data.rt[~val_rule1_ix].sem()
         
-        n_sacc_means[v,0]     = val_trial_data.n_saccs[val_rule1_ix].mean()
-        n_sacc_means[v,1]     = val_trial_data.n_saccs[~val_rule1_ix].mean()
-        n_sacc_sems[v,0]      = val_trial_data.n_saccs[val_rule1_ix].sem()
-        n_sacc_sems[v,1]      = val_trial_data.n_saccs[~val_rule1_ix].sem()
+        n_sacc_means[v,0] = val_trial_data.n_saccs[val_rule1_ix].mean()
+        n_sacc_means[v,1] = val_trial_data.n_saccs[~val_rule1_ix].mean()
+        n_sacc_sems[v,0]  = val_trial_data.n_saccs[val_rule1_ix].sem()
+        n_sacc_sems[v,1]  = val_trial_data.n_saccs[~val_rule1_ix].sem()
         
-        sacc1_means[v,0]     = val_trial_data.sacc1_val[val_rule1_ix].mean()
-        sacc1_means[v,1]     = val_trial_data.sacc1_val[~val_rule1_ix].mean()
-        sacc1_sems[v,0]      = val_trial_data.sacc1_val[val_rule1_ix].sem()
-        sacc1_sems[v,1]      = val_trial_data.sacc1_val[~val_rule1_ix].sem()
+        sacc1_means[v,0]  = val_trial_data.sacc1_val[val_rule1_ix].mean()
+        sacc1_means[v,1]  = val_trial_data.sacc1_val[~val_rule1_ix].mean()
+        sacc1_sems[v,0]   = val_trial_data.sacc1_val[val_rule1_ix].sem()
+        sacc1_sems[v,1]   = val_trial_data.sacc1_val[~val_rule1_ix].sem()
         
         
         
@@ -405,6 +397,7 @@ def choice_or_rt_by_val(alldata,debug_):
     
     xx=[]
     return
+# END of choice_or_rt_by_val
 
 
 def plot_rt_by_value(alldata, debug_):
@@ -441,11 +434,117 @@ def plot_rt_by_value(alldata, debug_):
     plt.xlabel('Chosen Option Value')
     plt.ylabel('rt (ms)')    
     plt.legend(['Correct','Error'])
-     
-    
     xx=[]
     
     return
+# END of plot_rt_by_value
+
+def check_switch_cost(alldata, debug_):
+    
+    if debug_:
+        pdb.set_trace() 
+        
+    fnames = alldata.fname.unique()
+    
+
+    switched_to_rule = np.array([])
+    prior_acc = np.array([])
+    switch_acc = np.array([])
+    after_acc = np.array([])
+    
+    prior_rt = np.array([])
+    switch_rt = np.array([])
+    after_rt = np.array([])
+
+    
+    # loop over each session  
+    for f in fnames:
+        
+        f_ix = alldata['fname']==f
+        fdata = alldata.loc[f_ix,:]
+        fdata = fdata.reset_index(drop=True)
+        
+        # find sequences of 1s and 2s
+        lens,pos,ids = ut.find_sequences(fdata.rule)
+        
+        # find where at least 4 trials of the same rule occurred in a row
+        valid_seqs = lens > 3
+        
+        switch_trials = pos[valid_seqs] + lens[valid_seqs]
+        switch_trials = switch_trials[switch_trials+1<len(fdata)]
+        
+        switched_to_rule = np.append(switched_to_rule,fdata['rule'][switch_trials])
+        prior_rt  = np.append(prior_rt,fdata['rt'][switch_trials-1])
+        switch_rt = np.append(switch_rt,fdata['rt'][switch_trials])
+        after_rt = np.append(after_rt,fdata['rt'][switch_trials])
+        
+        prior_acc = np.append(prior_acc,fdata['pickedbest'][switch_trials-1])
+        switch_acc = np.append(switch_acc,fdata['pickedbest'][switch_trials] )
+        after_acc = np.append(after_acc,fdata['pickedbest'][switch_trials+1] )
+        
+    
+    # let's do some plotting and stats
+    x_data = pd.DataFrame()
+    x_data['new_rule'] = np.concatenate([switched_to_rule,switched_to_rule])
+    x_data['before_after'] = np.concatenate([np.ones(len(prior_rt))*-1, 
+                                             np.ones(len(switch_rt))])
+    
+    x_data['rt'] = np.concatenate([prior_rt,switch_rt])
+    x_data['acc'] = np.concatenate([prior_acc, switch_acc])
+    x_data['switch_id'] = np.concatenate([np.arange(len(prior_rt)), 
+                                          np.arange(len(switch_rt))])
+     
+    rule1_ix = x_data.new_rule ==1
+    prior_ix = x_data.before_after == -1
+    
+    # summarize data for plotting
+    rule_1_rt_means = np.array([x_data.rt[rule1_ix & prior_ix].mean(),
+                                x_data.rt[rule1_ix & ~prior_ix].mean()])
+                                      
+    rule_1_rt_sems = np.array([x_data.rt[rule1_ix & prior_ix].sem(),
+                               x_data.rt[rule1_ix & ~prior_ix].sem()])
+                                     
+    rule_2_rt_means = np.array([x_data.rt[~rule1_ix & prior_ix].mean(),
+                                x_data.rt[~rule1_ix & ~prior_ix].mean()])
+                                          
+    rule_2_rt_sems = np.array([x_data.rt[~rule1_ix & prior_ix].sem(),
+                               x_data.rt[~rule1_ix & ~prior_ix].sem()])  
+
+    rule_1_acc_means = np.array([x_data.acc[rule1_ix & prior_ix].mean(),
+                                x_data.acc[rule1_ix & ~prior_ix].mean()])
+                                      
+    rule_1_acc_sems = np.array([x_data.acc[rule1_ix & prior_ix].sem(),
+                               x_data.acc[rule1_ix & ~prior_ix].sem()])
+                                     
+    rule_2_acc_means = np.array([x_data.acc[~rule1_ix & prior_ix].mean(),
+                                x_data.acc[~rule1_ix & ~prior_ix].mean()])
+                                          
+    rule_2_acc_sems = np.array([x_data.acc[~rule1_ix & prior_ix].sem(),
+                               x_data.acc[~rule1_ix & ~prior_ix].sem()])                                     
+                                      
+                    
+    fig, (ax1, ax2) = plt.subplots(1,2,figsize=(6,3))
+    plt.tight_layout(pad = 2)
+    
+    ax1.errorbar([1,2],rule_1_rt_means,rule_1_rt_sems,color='tab:red', marker='o')
+    ax1.errorbar([1,2],rule_2_rt_means,rule_1_rt_sems,color='tab:blue', marker='o')
+    ax1.set_xticks([1,2])
+    ax1.set_xticklabels(['trial before','switch'])
+    ax1.set_ylabel('RT (ms)')
+    
+    ax2.errorbar([1,2],rule_1_acc_means,rule_1_acc_sems,color='tab:red', marker='o')
+    ax2.errorbar([1,2],rule_2_acc_means,rule_1_acc_sems,color='tab:blue', marker='o')
+    ax2.set_xticks([1,2])
+    ax2.set_xticklabels(['trial before','switch'])
+    ax2.set_ylabel('Choice Accuracy')
+
+    
+    xx=[] 
+    return   
+
+        
+    
+    
 
 
 
