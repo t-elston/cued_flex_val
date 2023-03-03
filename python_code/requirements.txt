@@ -1,0 +1,7 @@
+pandas
+numpy
+matplotlib
+statsmodels
+pingouin
+h5py
+scipy
