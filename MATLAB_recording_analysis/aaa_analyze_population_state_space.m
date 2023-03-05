@@ -1,0 +1,214 @@
+
+% load the data
+load('C:\Users\Thomas Elston\Documents\MATLAB\Projects\CuedFlexVal\population_state_space_data.mat');
+
+HPC_cue = nanmean(HPC_cue_PCs, 3);
+OFC_cue = nanmean(OFC_cue_PCs, 3);
+
+HPC_choice = nanmean(HPC_choice_PCs, 3);
+OFC_choice = nanmean(OFC_choice_PCs, 3);
+
+n_boots = size(HPC_cue_PCs,3);
+
+hpc_cue_dist=[];
+ofc_cue_dist=[];
+
+hpc_val_dist=[];
+ofc_val_dist=[];
+hpc_slopes=[];
+ofc_slopes=[];
+
+x_PCs = [1,2,4];
+
+% let's get some distance stats 
+for b = 1:n_boots
+    
+    % CUE PERIOD
+    hpc_cue_dist(b,1) = mean([sqrt(sum((HPC_cue_PCs(1,:,b) - HPC_cue_PCs(2,:,b)).^2, 2)) ,...
+                              sqrt(sum((HPC_cue_PCs(3,:,b) - HPC_cue_PCs(4,:,b)).^2, 2))]);
+    
+    hpc_cue_dist(b,2) = mean([sqrt(sum((HPC_cue_PCs(1,:,b) - HPC_cue_PCs(4,:,b)).^2, 2)) ,...
+                              sqrt(sum((HPC_cue_PCs(2,:,b) - HPC_cue_PCs(3,:,b)).^2, 2)) ,...
+                              sqrt(sum((HPC_cue_PCs(1,:,b) - HPC_cue_PCs(3,:,b)).^2, 2)) ,...
+                              sqrt(sum((HPC_cue_PCs(2,:,b) - HPC_cue_PCs(4,:,b)).^2, 2)) ]);
+    
+    ofc_cue_dist(b,1) = mean([sqrt(sum((OFC_cue_PCs(1,:,b) - OFC_cue_PCs(2,:,b)).^2, 2)) ,...
+                              sqrt(sum((OFC_cue_PCs(3,:,b) - OFC_cue_PCs(4,:,b)).^2, 2))]);
+    
+    ofc_cue_dist(b,2) = mean([sqrt(sum((OFC_cue_PCs(1,:,b) - OFC_cue_PCs(4,:,b)).^2, 2)) ,...
+                              sqrt(sum((OFC_cue_PCs(2,:,b) - OFC_cue_PCs(3,:,b)).^2, 2)) ,...
+                              sqrt(sum((OFC_cue_PCs(1,:,b) - OFC_cue_PCs(3,:,b)).^2, 2)) ,...
+                              sqrt(sum((OFC_cue_PCs(2,:,b) - OFC_cue_PCs(4,:,b)).^2, 2)) ]);
+                          
+    % CHOICE PERIOD
+    % look at distance between same value reps across the contexts
+    hpc_val_dist(b,1) = sqrt(sum((HPC_choice_PCs(1,x_PCs,b) - HPC_choice_PCs(5,x_PCs,b)).^2, 2));
+    hpc_val_dist(b,2) = sqrt(sum((HPC_choice_PCs(2,x_PCs,b) - HPC_choice_PCs(6,x_PCs,b)).^2, 2));
+    hpc_val_dist(b,3) = sqrt(sum((HPC_choice_PCs(3,x_PCs,b) - HPC_choice_PCs(7,x_PCs,b)).^2, 2));
+    hpc_val_dist(b,4) = sqrt(sum((HPC_choice_PCs(4,x_PCs,b) - HPC_choice_PCs(8,x_PCs,b)).^2, 2));
+    
+    ofc_val_dist(b,1) = sqrt(sum((OFC_choice_PCs(1,x_PCs,b) - OFC_choice_PCs(5,x_PCs,b)).^2, 2));
+    ofc_val_dist(b,2) = sqrt(sum((OFC_choice_PCs(2,x_PCs,b) - OFC_choice_PCs(6,x_PCs,b)).^2, 2));
+    ofc_val_dist(b,3) = sqrt(sum((OFC_choice_PCs(3,x_PCs,b) - OFC_choice_PCs(7,x_PCs,b)).^2, 2));
+    ofc_val_dist(b,4) = sqrt(sum((OFC_choice_PCs(4,x_PCs,b) - OFC_choice_PCs(8,x_PCs,b)).^2, 2));
+    
+    % compute slopes of value distances for each bootstrap
+    hpc_slopes(b,:) = regress(hpc_val_dist(b,:)', [ones(size(hpc_val_dist(b,:)))', [1:4]']);
+    ofc_slopes(b,:) = regress(ofc_val_dist(b,:)', [ones(size(ofc_val_dist(b,:)))', [1:4]']);
+
+                          
+    
+    
+end % of looping over bootstraps
+
+cmap = cbrewer('qual','Paired',12);
+
+% plotting for CUE PHASE
+cue_figure = figure; 
+set(cue_figure,'Position',[400 400 800 600])
+%define axes
+HPC_PC_ax  = axes('Position',[.25   .6  .3  .3]);
+OFC_PC_ax  = axes('Position',[.65   .6  .3  .3]);
+Hist_ax    = axes('Position',[.25   .2  .7  .3]);
+
+axes(HPC_PC_ax);
+hold on
+plot3(HPC_cue(1,1), HPC_cue(1,2), HPC_cue(1,3), 'Marker','s','color','k', 'MarkerSize',15, 'MarkerFaceColor',cmap(6,:));
+plot3(HPC_cue(2,1), HPC_cue(2,2), HPC_cue(2,3), 'Marker','o','color','k', 'MarkerSize',15, 'MarkerFaceColor',cmap(6,:));
+plot3(HPC_cue(3,1), HPC_cue(3,2), HPC_cue(3,3), 'Marker','s','color','k', 'MarkerSize',15, 'MarkerFaceColor',cmap(2,:));
+plot3(HPC_cue(4,1), HPC_cue(4,2), HPC_cue(4,3), 'Marker','o','color','k', 'MarkerSize',15, 'MarkerFaceColor',cmap(2,:));
+xlim([-15, 15]);
+ylim([-15, 15]);
+zlim([-15, 15]);
+xlabel('PC1');
+ylabel('PC2');
+zlabel('PC3');
+legend({'Context A, Cue 1','Context A, Cue 2', 'Context B, Cue 1','Context B, Cue 2'}, 'Location', [.08 .8 .1 .1]);
+title('HPC');
+view(21, 11);
+HPC_cue_pval = 1- sum((hpc_cue_dist(:,2) - hpc_cue_dist(:,1)) > 0) / n_boots;
+
+axes(OFC_PC_ax);
+hold on
+plot3(OFC_cue(1,1), OFC_cue(1,2), OFC_cue(1,3), 'Marker','s','color','k', 'MarkerSize',15, 'MarkerFaceColor',cmap(5,:));
+plot3(OFC_cue(2,1), OFC_cue(2,2), OFC_cue(2,3), 'Marker','o','color','k', 'MarkerSize',15, 'MarkerFaceColor',cmap(5,:));
+plot3(OFC_cue(3,1), OFC_cue(3,2), OFC_cue(3,3), 'Marker','s','color','k', 'MarkerSize',15, 'MarkerFaceColor',cmap(1,:));
+plot3(OFC_cue(4,1), OFC_cue(4,2), OFC_cue(4,3), 'Marker','o','color','k', 'MarkerSize',15, 'MarkerFaceColor',cmap(1,:));
+xlim([-15, 15]);
+ylim([-15, 15]);
+zlim([-15, 15]);
+title('OFC');
+view(21, 11);
+OFC_cue_pval = 1 - sum((ofc_cue_dist(:,2) - ofc_cue_dist(:,1)) > 0) / n_boots;
+
+axes(Hist_ax);
+hold on
+histogram(hpc_cue_dist(:,1), 'Normalization','Probability','BinWidth',.1,'FaceColor',cmap(4,:),'EdgeColor','none');
+histogram(hpc_cue_dist(:,2), 'Normalization','Probability','BinWidth',.1,'FaceColor',[.2 .2 .2],'EdgeColor','none');
+histogram(ofc_cue_dist(:,1), 'Normalization','Probability','BinWidth',.1,'FaceColor',cmap(3,:),'EdgeColor','none');
+histogram(ofc_cue_dist(:,2), 'Normalization','Probability','BinWidth',.1,'FaceColor',[.6 .6 .6],'EdgeColor','none');
+legend({'HPC Within-Context','HPC Across-Context', 'OFC Within-Context', 'OFC Across-Context'},'Location', [.08 .4 .1 .1]);
+h = gca;
+h.YAxis.Visible = 'off';
+xlabel('Euclidean Distance (a.u.)');
+
+%-----------------------------------------------------
+choice_figure = figure; 
+set(choice_figure,'Position',[400 400 800 600])
+%define axes
+HPC_choice_PC_ax  = axes('Position',[.25   .6  .3  .3]);
+OFC_choice_PC_ax  = axes('Position',[.65   .6  .3  .3]);
+Choice_dist_ax    = axes('Position',[.25   .2  .3  .3]);
+Choice_clope_ax   = axes('Position',[.65   .2  .3  .3]);
+
+
+axes(HPC_choice_PC_ax);
+hold on
+plot3(HPC_choice(1,1),HPC_choice(1,2), HPC_choice(1,4), 'Marker','o','color','k', 'MarkerSize',15, 'MarkerFaceColor',cmap(6,:));
+plot3(HPC_choice(2,1),HPC_choice(2,2), HPC_choice(2,4), 'Marker','^','color','k', 'MarkerSize',15, 'MarkerFaceColor',cmap(6,:));
+plot3(HPC_choice(3,1),HPC_choice(3,2), HPC_choice(3,4), 'Marker','s','color','k', 'MarkerSize',15, 'MarkerFaceColor',cmap(6,:));
+plot3(HPC_choice(4,1),HPC_choice(4,2), HPC_choice(4,4), 'Marker','pentagram','color','k', 'MarkerSize',15, 'MarkerFaceColor',cmap(6,:));
+plot3(HPC_choice(5,1),HPC_choice(5,2), HPC_choice(5,4), 'Marker','o','color','k', 'MarkerSize',15, 'MarkerFaceColor',cmap(2,:));
+plot3(HPC_choice(6,1),HPC_choice(6,2), HPC_choice(6,4), 'Marker','^','color','k', 'MarkerSize',15, 'MarkerFaceColor',cmap(2,:));
+plot3(HPC_choice(7,1),HPC_choice(7,2), HPC_choice(7,4), 'Marker','s','color','k', 'MarkerSize',15, 'MarkerFaceColor',cmap(2,:));
+plot3(HPC_choice(8,1),HPC_choice(8,2), HPC_choice(8,4), 'Marker','pentagram','color','k', 'MarkerSize',15, 'MarkerFaceColor',cmap(2,:));
+legend({'C1, V1','C1, V2','C1, V3', 'C1, V4','C2, V1','C2, V2','C2, V3', 'C2, V4'},'Location', [.08 .8 .1 .1]);
+title('HPC');
+xlabel('PC1');
+ylabel('PC2');
+zlabel('PC4');
+xlim([-13, 13]);
+ylim([-13, 13]);
+zlim([-10, 10]);
+view(-40, 0);
+
+axes(OFC_choice_PC_ax); 
+hold on
+plot3(OFC_choice(1,1),OFC_choice(1,2), OFC_choice(1,4), 'Marker','o','color','k', 'MarkerSize',15, 'MarkerFaceColor',cmap(5,:));
+plot3(OFC_choice(2,1),OFC_choice(2,2), OFC_choice(2,4), 'Marker','^','color','k', 'MarkerSize',15, 'MarkerFaceColor',cmap(5,:));
+plot3(OFC_choice(3,1),OFC_choice(3,2), OFC_choice(3,4), 'Marker','s','color','k', 'MarkerSize',15, 'MarkerFaceColor',cmap(5,:));
+plot3(OFC_choice(4,1),OFC_choice(4,2), OFC_choice(4,4), 'Marker','pentagram','color','k', 'MarkerSize',15, 'MarkerFaceColor',cmap(5,:));
+plot3(OFC_choice(5,1),OFC_choice(5,2), OFC_choice(5,4), 'Marker','o','color','k', 'MarkerSize',15, 'MarkerFaceColor',cmap(1,:));
+plot3(OFC_choice(6,1),OFC_choice(6,2), OFC_choice(6,4), 'Marker','^','color','k', 'MarkerSize',15, 'MarkerFaceColor',cmap(1,:));
+plot3(OFC_choice(7,1),OFC_choice(7,2), OFC_choice(7,4), 'Marker','s','color','k', 'MarkerSize',15, 'MarkerFaceColor',cmap(1,:));
+plot3(OFC_choice(8,1),OFC_choice(8,2), OFC_choice(8,4), 'Marker','pentagram','color','k', 'MarkerSize',15, 'MarkerFaceColor',cmap(1,:));
+title('OFC');
+xlabel('PC1');
+ylabel('PC2');
+zlabel('PC4');
+xlim([-13, 13]);
+ylim([-13, 13]);
+zlim([-10, 10]);
+view(53, 0);
+
+% Prepare data to plot value-related distances
+val1_x = make_jittered_xvals(hpc_val_dist(:,1), [.7, 1.3]);
+val2_x = make_jittered_xvals(hpc_val_dist(:,1), [1.7, 2.3]);
+val3_x = make_jittered_xvals(hpc_val_dist(:,1), [2.7, 3.3]);
+val4_x = make_jittered_xvals(hpc_val_dist(:,1), [3.7, 4.3]);
+
+axes(Choice_dist_ax);
+hold on
+plot(val1_x, hpc_val_dist(:,1),'.','color', cmap(10,:));
+plot(val2_x, hpc_val_dist(:,2),'.','color', cmap(10,:));
+plot(val3_x, hpc_val_dist(:,3),'.','color', cmap(10,:));
+plot(val4_x, hpc_val_dist(:,4),'.','color', cmap(10,:));
+
+plot(val1_x, ofc_val_dist(:,1),'.','color', cmap(9,:));
+plot(val2_x, ofc_val_dist(:,2),'.','color', cmap(9,:));
+plot(val3_x, ofc_val_dist(:,3),'.','color', cmap(9,:));
+plot(val4_x, ofc_val_dist(:,4),'.','color', cmap(9,:));
+
+plot([1:4], mean(hpc_val_dist),'-s', 'color', cmap(10,:),'MarkerFaceColor','k', 'LineWidth',2, 'MarkerSize',12);
+plot([1:4], mean(ofc_val_dist),'-o', 'color', cmap(9,:),'MarkerFaceColor','k', 'LineWidth',2, 'MarkerSize',10);
+xticks([1:4]);
+xlabel('Chosen Value');
+ylabel('Across Context Distance (a.u.)');
+
+
+axes(Choice_clope_ax);
+hold on
+histogram(hpc_slopes(:,2), 'Normalization','Probability','BinWidth',.1,'FaceColor',cmap(10,:),'EdgeColor','none');
+histogram(ofc_slopes(:,2), 'Normalization','Probability','BinWidth',.1,'FaceColor',cmap(9,:),'EdgeColor','none');
+h = gca;
+h.YAxis.Visible = 'off';
+xlabel('Beta(value) (Distance ~ Value + int)');
+legend({'HPC', 'OFC'},'Location', [.08 .4 .1 .1]);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
