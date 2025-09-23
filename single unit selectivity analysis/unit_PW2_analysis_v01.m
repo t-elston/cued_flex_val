@@ -281,8 +281,8 @@ n_k_ofc = sum(k_ofc);
 k_hpc = hpc_ix & k_ix; 
 n_k_hpc = sum(k_hpc);
 k_OFC_state_only = sum(choice_pvals(k_ofc, 1) < .05 & choice_pvals(k_ofc, 2) > .05 & choice_pvals(k_ofc, 3) > .05);
-k_OFC_val_only =   sum(choice_pvals(k_ofc, 1) > .05 & choice_pvals(k_ofc, 2) < .01 & choice_pvals(k_ofc, 3) > .05);
-k_OFC_state_val =  sum(                               choice_pvals(k_ofc, 2) > .01 & choice_pvals(k_ofc, 3) < .05);
+k_OFC_val_only =   sum(choice_pvals(k_ofc, 1) > .05 & choice_pvals(k_ofc, 2) < .05 & choice_pvals(k_ofc, 3) > .05);
+k_OFC_state_val =  sum(                               choice_pvals(k_ofc, 2) > .05 & choice_pvals(k_ofc, 3) < .05);
 
 k_HPC_state_only = sum(choice_pvals(k_hpc, 1) < .05 & choice_pvals(k_hpc, 2) > .05 & choice_pvals(k_hpc, 3) > .05);
 k_HPC_val_only =   sum(choice_pvals(k_hpc, 1) > .05 & choice_pvals(k_hpc, 2) < .05 & choice_pvals(k_hpc, 3) > .01);
@@ -347,6 +347,7 @@ title('Subject D')
 
 [~,k_ofc_val_X2,k_ofc_val_pval] = chiSquareWithFrequencies_v02(k_OFC_val_only, n_k_ofc, ...
                                                                k_OFC_state_val, n_k_ofc);
+
 
 
 
