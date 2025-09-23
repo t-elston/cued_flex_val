@@ -1,4 +1,4 @@
-% unit_selectivity_analysis.m
+% unit_PW2_analysis_v01.m
 
 %-----------------------------
 % This function does a sliding-window analysis of partial omega squared
@@ -361,5 +361,6 @@ title('Subject D')
 
 
 fprintf('\n all done :] \n ');
+
 
 
