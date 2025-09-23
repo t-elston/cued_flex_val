@@ -1,7 +1,7 @@
 % unit_selectivity_analysis.m
 
 %-----------------------------
-% This function does a sliding-window analysis of partial eta squared
+% This function does a sliding-window analysis of partial omega squared
 %-----------------------------
 rec_dir = 'C:/Users/Thomas Elston/Documents/MATLAB/Projects/CuedFlexVal/preprocessed data/';
 
@@ -361,4 +361,5 @@ title('Subject D')
 
 
 fprintf('\n all done :] \n ');
+
 
