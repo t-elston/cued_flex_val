@@ -204,7 +204,7 @@ figure;
 subplot(1,2,1)
 hold on
 shadedErrorBar(t_mids, K_OFC_state_mean, K_OFC_state_ci, 'lineprops',{'color', ofc_c, 'LineWidth', 2});
-shadedErrorBar(t_mids, K_HPC_state_mean+.2, K_HPC_state_ci, 'lineprops',{'color', hpc_c, 'LineWidth', 2});
+shadedErrorBar(t_mids, K_HPC_state_mean, K_HPC_state_ci, 'lineprops',{'color', hpc_c, 'LineWidth', 2});
 ylim([0, 5])
 xlim([-1, 1])
 title('Subject K')
@@ -361,3 +361,4 @@ title('Subject D')
 
 
 fprintf('\n all done :] \n ');
+
